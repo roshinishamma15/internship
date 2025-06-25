@@ -1,0 +1,46 @@
+# 1. Import necessary modules
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import col, isnan, when, count
+
+# 2. Create a Spark session
+spark = SparkSession.builder.appName("BigDataAnalysis").getOrCreate()
+
+# 3. Load the Dataset
+file_path = "/content/sample_data/california_housing_train.csv"
+df = spark.read.csv(file_path, header=True, inferSchema=True)
+
+# 4. Display top 5 rows
+print("Top 5 rows of the dataset:")
+df.show(5)
+
+# 5. View Schema and Summary Statistics
+print("Schema of the DataFrame:")
+df.printSchema()
+
+print("Summary statistics of the DataFrame:")
+df.describe().show()
+
+# 6. Data Cleaning: Check for null values
+print("Null values in each column:")
+df.select([count(when(col(c).isNull() | isnan(c), c)).alias(c) for c in df.columns]).show()
+
+# 7. Analysis 1: Average House Value by Latitude
+print("Average median_house_value by latitude:")
+df.groupBy("latitude") \
+  .avg("median_house_value") \
+  .withColumnRenamed("avg(median_house_value)", "avg_house_value") \
+  .orderBy("latitude") \
+  .show(10)
+
+# 8. Analysis 2: Top 10 most expensive housing areas
+print("Top 10 most expensive housing areas:")
+df.select("longitude", "latitude", "median_house_value") \
+  .orderBy(col("median_house_value").desc()) \
+  .show(10)
+
+# 9. Analysis 3: Correlation between median_income and median_house_value
+correlation = df.stat.corr("median_income", "median_house_value")
+print(f"Correlation between median_income and median_house_value: {correlation:.2f}")
+
+# 10. Stop Spark session
+spark.stop()
