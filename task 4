@@ -1,0 +1,40 @@
+# Install dash (only once per runtime)
+!pip install dash
+
+import dash
+from dash import dcc, html
+import plotly.express as px
+import pandas as pd
+import os
+
+# Load dataset
+csv_file = '/content/sales file.csv'  # Full path on Colab
+if not os.path.exists(csv_file):
+    raise FileNotFoundError(f"The file '{csv_file}' does not exist.")
+
+# Read CSV
+df = pd.read_csv(csv_file)
+
+# Optional: Preview the data
+print(df.head())
+
+# Ensure required columns exist
+required_columns = {'Category', 'Sales', 'Region'}
+if not required_columns.issubset(df.columns):
+    raise ValueError(f"Dataset must contain the columns: {required_columns}")
+
+# Create a bar chart
+fig = px.bar(df, x='Category', y='Sales', color='Region', title='Sales by Category and Region')
+
+# Initialize the Dash app
+app = dash.Dash(__name__)
+
+# Define layout
+app.layout = html.Div([
+    html.H1("Sales Dashboard", style={'textAlign': 'center'}),
+    dcc.Graph(figure=fig)
+])
+
+# Run server
+if __name__ == '__main__':
+    app.run_server(mode='inline')  # Use this for Jupyter/Colab
